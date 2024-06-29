@@ -33,7 +33,7 @@ RideFusion is a mobile application that aggregates ride-hailing services, allowi
    GOOGLE_API_KEY=your_api_key_here
 
 5. Start the Expo development server:
-   npx expo start --tunnel
+   npm run start
 
 
 
