@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "RideFusion",
+    "scheme": "ridefusion",
     "slug": "RideFusion",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,10 +19,13 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.oneapp.ridefusion",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
     }
+
   }
 }
