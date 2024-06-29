@@ -1,5 +1,5 @@
 // HomeScreen.js
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   Modal,
   View,
@@ -15,21 +15,22 @@ import {
   Animated,
   Linking,
   ActivityIndicator,
-} from 'react-native';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import * as Location from 'expo-location';
-import locationIcon from '../assets/current-location.png';
-import axios from 'axios';
+} from "react-native";
+// import { GOOGLE_API_KEY } from "@env";
+import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
+import * as Location from "expo-location";
+import locationIcon from "../assets/current-location.png";
+import axios from "axios";
 // import * as Linking from 'expo-linking';
-import { useNavigation } from '@react-navigation/native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { ScrollView } from 'react-native-virtualized-view';
-import { WebView } from 'react-native-webview';
-import ola from '../assets/ola.png';
-import uber from '../assets/uber1.png';
-import rapido from '../assets/rapido.png';
-import Icon from 'react-native-vector-icons/Ionicons';
-import AvailableRidesModal from '../component/AvailableRidesModal.js';
+import { useNavigation } from "@react-navigation/native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { ScrollView } from "react-native-virtualized-view";
+import { WebView } from "react-native-webview";
+import ola from "../assets/ola.png";
+import uber from "../assets/uber1.png";
+import rapido from "../assets/rapido.png";
+import Icon from "react-native-vector-icons/Ionicons";
+import AvailableRidesModal from "../component/AvailableRidesModal.js";
 
 const FareItem = ({ service, price, logo, onPress }) => {
   return (
@@ -48,18 +49,18 @@ const HomeScreen = () => {
   const googlePlacesRef = useRef(null);
   const webviewRef = useRef(null);
   const navigation = useNavigation();
-  const [app, setApp] = useState('');
+  const [app, setApp] = useState("");
   const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
-  const [authUrl, setAuthUrl] = useState('');
-  const [pickupLocation, setPickupLocation] = useState('');
+  const [authUrl, setAuthUrl] = useState("");
+  const [pickupLocation, setPickupLocation] = useState("");
   const [pickupLocationCoor, setPickupLocationCoor] = useState({
-    latitude: '',
-    longitude: '',
+    latitude: "",
+    longitude: "",
   });
-  const [dropLocation, setDropLocation] = useState('');
+  const [dropLocation, setDropLocation] = useState("");
   const [dropLocationCoor, setDropLocationCoor] = useState({
-    latitude: '',
-    longitude: '',
+    latitude: "",
+    longitude: "",
   });
 
   const [isFareModalVisible, setIsFareModalVisible] = useState(false);
@@ -71,41 +72,41 @@ const HomeScreen = () => {
 
   //Uber api
   const [loading, setLoading] = useState(false);
-  const [injectedJS, setInjectedJS] = useState('');
+  const [injectedJS, setInjectedJS] = useState("");
   const [shouldRefreshOlaPrices, setShouldRefreshOlaPrices] = useState(false);
 
   const handleMessage = (event) => {
     const data = JSON.parse(event.nativeEvent.data);
     if (data.error) {
-      console.error('Error:', data.error);
+      console.error("Error:", data.error);
     } else {
-      console.log('Data:', data);
+      console.log("Data:", data);
     }
     setLoading(false);
   };
 
   const handleSetPickupLocation = (data) => {
     setPickupLocation(data);
-    console.log('Pickup Location Set:', pickupLocation);
-    console.log('Pickup Location Passed:', data);
+    console.log("Pickup Location Set:", pickupLocation);
+    console.log("Pickup Location Passed:", data);
   };
 
   const handleSetDropLocation = (data) => {
     setDropLocation(data);
-    console.log('Drop Location Set:', dropLocation);
-    console.log('Drop Location Passed:', data);
+    console.log("Drop Location Set:", dropLocation);
+    console.log("Drop Location Passed:", data);
   };
 
   const handleSetPickupLocationCoor = (data) => {
     setPickupLocationCoor(data);
-    console.log('Pickup Location Coor Set:', pickupLocationCoor);
-    console.log('Pickup Location Coor Passed:', data);
+    console.log("Pickup Location Coor Set:", pickupLocationCoor);
+    console.log("Pickup Location Coor Passed:", data);
   };
 
   const handleSetDropLocationCoor = (data) => {
     setDropLocationCoor(data);
-    console.log('Drop Location Coor Set:', dropLocationCoor);
-    console.log('Drop Location Coor Passed:', data);
+    console.log("Drop Location Coor Set:", dropLocationCoor);
+    console.log("Drop Location Coor Passed:", data);
   };
 
   const handlePickupSelect = async (data, details) => {
@@ -156,10 +157,10 @@ const HomeScreen = () => {
   const handleUseCurrentLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
+      if (status !== "granted") {
         Alert.alert(
-          'Permission Denied',
-          'Please enable location services to use this feature.'
+          "Permission Denied",
+          "Please enable location services to use this feature."
         );
         return;
       }
@@ -180,11 +181,11 @@ const HomeScreen = () => {
 
       const address = addressResponse[0];
       // console.log(address);
-      handleSetPickupLocation(`${address.formattedAddress || ''}`.trim());
+      handleSetPickupLocation(`${address.formattedAddress || ""}`.trim());
 
       if (googlePlacesRef.current) {
         googlePlacesRef.current.setAddressText(
-          `${address.formattedAddress || ''}`.trim()
+          `${address.formattedAddress || ""}`.trim()
         );
       }
       // const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${pickupLocationCoor.latitude},${pickupLocationCoor.longitude}&key=AIzaSyDoY8kaH8X6P2dhE0-FadrN5VOwfkt4Dwk&sensor=true`;
@@ -200,10 +201,10 @@ const HomeScreen = () => {
       //   })
       //   .catch((error) => console.error('Error:', error));
     } catch (error) {
-      console.error('Error fetching location:', error);
+      console.error("Error fetching location:", error);
       Alert.alert(
-        'Location Error',
-        'Unable to fetch current location. Please try again later.'
+        "Location Error",
+        "Unable to fetch current location. Please try again later."
       );
     }
   };
@@ -213,7 +214,7 @@ const HomeScreen = () => {
 
     try {
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
       });
 
       if (!response.ok) {
@@ -230,13 +231,13 @@ const HomeScreen = () => {
           price: value.price,
           fareId: value.fareId,
           logo: ola,
-          app: 'ola',
+          app: "ola",
           deepLink: `olacabs://app/launch?lat=${pickupLocationCoor.latitude}&lng=${pickupLocationCoor.longitude}&drop_lat=${dropLocationCoor.latitude}&drop_lng=${dropLocationCoor.longitude}`,
         })
       );
 
       setAllRides((prevRides) => {
-        const nonOlaRides = prevRides.filter((ride) => ride.app !== 'ola');
+        const nonOlaRides = prevRides.filter((ride) => ride.app !== "ola");
         return [...nonOlaRides, ...formattedFares];
       });
       console.log(allRides);
@@ -245,7 +246,7 @@ const HomeScreen = () => {
       //   return [...nonOlaFares, ...formattedFares];
       // });
     } catch (error) {
-      console.error('There was a problem fetching the Ola fare data:', error);
+      console.error("There was a problem fetching the Ola fare data:", error);
     }
   };
   const handleCloseFareModal = () => {
@@ -268,7 +269,7 @@ const HomeScreen = () => {
         const deepLink = {
           ola: `olacabs://app/launch?lat=${pickupLocationCoor.latitude}&lng=${pickupLocationCoor.longitude}&drop_lat=${dropLocationCoor.latitude}&drop_lng=${dropLocationCoor.longitude}`,
           uber: `uber://?action=setPickup&pickup[latitude]=${pickupLocationCoor.latitude}&pickup[longitude]=${pickupLocationCoor.longitude}&dropoff[latitude]=${dropLocationCoor.latitude}&dropoff[longitude]=${dropLocationCoor.longitude}`,
-          rapido: 'https://rapido.bike',
+          rapido: "https://rapido.bike",
         };
 
         //uber graphql api
@@ -286,7 +287,7 @@ const HomeScreen = () => {
 
         setIsFareModalVisible(true);
       } catch (error) {
-        console.error('There was a problem fetching the fare data:', error);
+        console.error("There was a problem fetching the fare data:", error);
         return null;
       } finally {
         setSearchRideLoading(false); // Hide loading bar
@@ -339,7 +340,7 @@ const HomeScreen = () => {
       //
       //    Linking.openURL(uberDeepLink).catch(err => console.error("Couldn't load page", err));
     } else {
-      alert('Please select both pickup and drop locations.');
+      alert("Please select both pickup and drop locations.");
     }
   };
 
@@ -347,16 +348,16 @@ const HomeScreen = () => {
     // Handle authentication for the selected app
     console.log(`Authenticate ${app}`);
     setLoginStatusVerify(true);
-    if (app === 'Ola') {
-      setApp('Ola');
+    if (app === "Ola") {
+      setApp("Ola");
       // Replace this URL with the actual Ola authentication URL
       // setAuthUrl('https://accounts.olacabs.com/');
-      setAuthUrl('https://book.olacabs.com/');
+      setAuthUrl("https://book.olacabs.com/");
       setIsAuthModalVisible(true);
-    } else if (app === 'Uber') {
-      setApp('Uber');
+    } else if (app === "Uber") {
+      setApp("Uber");
       // Replace this URL with the actual Ola authentication URL
-      setAuthUrl('https://m.uber.com/');
+      setAuthUrl("https://m.uber.com/");
       setIsAuthModalVisible(true);
     }
     // Implement your authentication logic here
@@ -364,7 +365,7 @@ const HomeScreen = () => {
 
   const handleAuthComplete = async (event) => {
     // Check if the URL indicates successful authentication
-    if (app === 'Ola') {
+    if (app === "Ola") {
       // fetch('https://accounts.olacabs.com/api/verify')
       //   .then((response) => {
       //     if (
@@ -464,19 +465,19 @@ const HomeScreen = () => {
       ],
     };
 
-    const response = await fetch('https://m.uber.com/go/graphql', {
-      method: 'POST',
+    const response = await fetch("https://m.uber.com/go/graphql", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         // You might need to handle CSRF token differently
         // 'X-Csrf-Token': 'Your CSRF token here'
       },
       body: JSON.stringify({
-        operationName: 'Products',
+        operationName: "Products",
         variables: uberVariables,
         query: uberGraphQLQuery,
       }),
-      credentials: 'include',
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -487,7 +488,7 @@ const HomeScreen = () => {
   };
   const handleUberData = (data) => {
     if (data.errors) {
-      console.error('Errors in Uber data:', data.errors);
+      console.error("Errors in Uber data:", data.errors);
       return;
     }
 
@@ -495,10 +496,10 @@ const HomeScreen = () => {
       tier.products.map((product) => ({
         id: product.displayName,
         service: product.displayName,
-        price: product.fare ? `$${product.fare.toFixed(2)}` : 'N/A',
+        price: product.fare ? `$${product.fare.toFixed(2)}` : "N/A",
         estimatedTime: product.estimatedTripTime,
         logo: uber,
-        app: 'uber',
+        app: "uber",
         deepLink: `uber://?action=setPickup&pickup[latitude]=${pickupLocationCoor.latitude}&pickup[longitude]=${pickupLocationCoor.longitude}&dropoff[latitude]=${dropLocationCoor.latitude}&dropoff[longitude]=${dropLocationCoor.longitude}`,
       }))
     );
@@ -525,11 +526,11 @@ const HomeScreen = () => {
 
   return (
     <KeyboardAvoidingView style={styles.container}>
-      <StatusBar barStyle='light-content' backgroundColor='#000' />
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
 
       {/* Add the settings icon */}
       <TouchableOpacity style={styles.settingsIcon} onPress={togglePanel}>
-        <Icon name='settings-outline' size={24} color='#fff' />
+        <Icon name="settings-outline" size={24} color="#fff" />
       </TouchableOpacity>
 
       {/* Add the sliding panel */}
@@ -537,27 +538,27 @@ const HomeScreen = () => {
         style={[styles.panel, { transform: [{ translateX: slideAnim }] }]}
       >
         <TouchableOpacity style={styles.closePanel} onPress={togglePanel}>
-          <Icon name='close-outline' size={30} color='#000' />
+          <Icon name="close-outline" size={30} color="#000" />
         </TouchableOpacity>
         <Text style={styles.panelTitle}>Authenticate your apps</Text>
         <View style={styles.iconList}>
           <TouchableOpacity
             style={styles.iconItem}
-            onPress={() => handleAuthenticateApp('Ola')}
+            onPress={() => handleAuthenticateApp("Ola")}
           >
             <Image source={ola} style={[styles.olaLogo]} />
             <Text>Ola</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconItem}
-            onPress={() => handleAuthenticateApp('Uber')}
+            onPress={() => handleAuthenticateApp("Uber")}
           >
             <Image source={uber} style={[styles.uberLogo]} />
             <Text>Uber</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconItem}
-            onPress={() => handleAuthenticateApp('Rapido')}
+            onPress={() => handleAuthenticateApp("Rapido")}
           >
             <Image source={rapido} style={[styles.rapidoLogo]} />
             <Text>Rapido</Text>
@@ -571,15 +572,15 @@ const HomeScreen = () => {
         <View style={styles.inputContainer}>
           <GooglePlacesAutocomplete
             ref={googlePlacesRef}
-            placeholder='Enter pickup location'
+            placeholder="Enter pickup location"
             minLength={2}
             onFail={(err) => console.error(err)}
             fetchDetails={true}
-            listViewDisplayed='auto'
+            listViewDisplayed="auto"
             onPress={handlePickupSelect}
             query={{
               key: process.env.GOOGLE_API_KEY,
-              language: 'en',
+              language: "en",
             }}
             styles={{
               container: styles.autocompleteContainer,
@@ -604,14 +605,14 @@ const HomeScreen = () => {
 
         <View style={styles.inputContainer}>
           <GooglePlacesAutocomplete
-            placeholder='Enter drop location'
+            placeholder="Enter drop location"
             minLength={2}
             onFail={(err) => console.error(err)}
             fetchDetails={true}
-            listViewDisplayed='auto'
+            listViewDisplayed="auto"
             query={{
               key: process.env.GOOGLE_API_KEY,
-              language: 'en',
+              language: "en",
             }}
             onPress={handleDropSelect}
             styles={{
@@ -623,8 +624,8 @@ const HomeScreen = () => {
         </View>
         {searchRideLoading && (
           <ActivityIndicator
-            size='50'
-            color='#4CAF50'
+            size="50"
+            color="#4CAF50"
             style={styles.searchRideLoading}
           />
         )}
@@ -638,7 +639,7 @@ const HomeScreen = () => {
         <Modal
           visible={isAuthModalVisible}
           onRequestClose={() => setIsAuthModalVisible(false)}
-          animationType='slide'
+          animationType="slide"
           transparent={true}
         >
           <View style={styles.modalContainer}>
@@ -674,7 +675,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 20,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
   },
   content: {
     flex: 1,
@@ -682,8 +683,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
   },
   inputContainer: {
     margin: 15,
@@ -692,62 +693,62 @@ const styles = StyleSheet.create({
   autocompleteContainer: {
     flex: 1,
     left: 0,
-    position: 'absolute',
+    position: "absolute",
     right: 0,
     top: 0,
   },
   textInput: {
     height: 40,
-    backgroundColor: '#333',
-    color: '#fff',
+    backgroundColor: "#333",
+    color: "#fff",
     borderRadius: 5,
     paddingLeft: 10,
   },
   listViewFirst: {
-    backgroundColor: '#333',
-    position: 'absolute',
+    backgroundColor: "#333",
+    position: "absolute",
     top: 50,
     left: 0,
     right: 0,
     zIndex: 1,
   },
   listViewSecond: {
-    backgroundColor: '#333',
-    position: 'absolute',
+    backgroundColor: "#333",
+    position: "absolute",
     top: 50,
     left: 0,
     right: 0,
     zIndex: 2,
   },
   searchButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 5,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 420,
     margin: 40,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   currentLocation: {
-    flexDirection: 'row', // Align items horizontally
-    alignItems: 'center', // Center items vertically
+    flexDirection: "row", // Align items horizontally
+    alignItems: "center", // Center items vertically
     marginBottom: 10,
     margin: 15, // Padding around the icon container
     borderRadius: 5, // Border radius for rounded corners
-    width: '100%', // Ensure full width
+    width: "100%", // Ensure full width
   },
   currentLocationText: {
-    color: '#4CAF50',
+    color: "#4CAF50",
     fontSize: 16,
-    textDecorationLine: 'underline',
+    textDecorationLine: "underline",
   },
   locationIcon: {
-    backgroundColor: '#4CAF50', // Background color of the icon
+    backgroundColor: "#4CAF50", // Background color of the icon
 
     width: 20, // Adjust width as needed
     height: 20, // Adjust height as needed
@@ -758,123 +759,123 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   authLabel: {
-    color: '#888',
+    color: "#888",
     fontSize: 14,
     marginBottom: 5,
   },
   authButtonsContainer: {
     marginTop: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   authButton: {
     width: 80,
     padding: 8,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#4CAF50',
+    borderColor: "#4CAF50",
   },
   authButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 14,
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    width: '90%',
-    height: '80%',
-    backgroundColor: 'white',
+    width: "90%",
+    height: "80%",
+    backgroundColor: "white",
     borderRadius: 10,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   webview: {
     flex: 1,
   },
   closeButton: {
     padding: 10,
-    backgroundColor: '#4CAF50',
-    alignItems: 'center',
+    backgroundColor: "#4CAF50",
+    alignItems: "center",
   },
   closeButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   fareModalContent: {
-    width: '90%',
-    maxHeight: '80%',
-    backgroundColor: '#333',
+    width: "90%",
+    maxHeight: "80%",
+    backgroundColor: "#333",
     borderRadius: 10,
     padding: 20,
   },
   fareModalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
     marginBottom: 15,
   },
   fareService: {
     fontSize: 16,
-    color: '#fff',
+    color: "#fff",
   },
   farePrice: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    fontWeight: "bold",
+    color: "#4CAF50",
   },
   fareItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   fareLogo: {
     width: 40,
     height: 40,
     marginRight: 10,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   fareService: {
     fontSize: 16,
-    color: '#fff',
+    color: "#fff",
   },
   farePrice: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    fontWeight: "bold",
+    color: "#4CAF50",
   },
   settingsIcon: {
-    position: 'absolute',
+    position: "absolute",
     top: 25,
     right: 20,
     zIndex: 2,
   },
   panel: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     right: 0,
-    width: '50%',
-    height: '110%',
-    backgroundColor: '#f0f0f0',
+    width: "50%",
+    height: "110%",
+    backgroundColor: "#f0f0f0",
     padding: 20,
     zIndex: 2,
   },
   panelTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
   },
   iconList: {
-    flexDirection: 'column',
-    alignItems: 'center',
+    flexDirection: "column",
+    alignItems: "center",
   },
   iconItem: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   closePanel: {
-    position: 'absolute',
+    position: "absolute",
     top: 30,
     right: 20,
     zIndex: 3,
@@ -892,27 +893,27 @@ const styles = StyleSheet.create({
     height: 30,
   },
   fareItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   logo: {
     width: 40,
     height: 40,
     marginRight: 10,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   service: {
     flex: 1,
     fontSize: 16,
-    color: '#fff',
+    color: "#fff",
   },
   price: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    fontWeight: "bold",
+    color: "#4CAF50",
   },
   searchRideLoading: {
     marginTop: 50,
