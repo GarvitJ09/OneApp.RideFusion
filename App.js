@@ -8,10 +8,11 @@ import HomeScreen from './screens/HomeScreen';
 import UberScreen from './screens/UberScreen';
 import OlaScreen from './screens/OlaScreen';
 import RapidoScreen from './screens/RapidoScreen';
+import AvailableRidesScreen from './screens/AvailableRidesScreen';
 import ola from './assets/ola.png';
 import uber from './assets/uber1.png';
 import rapido from './assets/rapido.png';
-import { GOOGLE_API_KEY} from '@env';
+import { GOOGLE_API_KEY } from '@env';
 
 import {
   View,
@@ -107,9 +108,15 @@ function App() {
           component={SplashScreen}
           options={{ headerShown: false }}
         />
+
         <Stack.Screen
           name='MainTabs'
           component={MainTabs}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name='AvailableRides'
+          component={AvailableRidesScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
