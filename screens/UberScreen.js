@@ -80,32 +80,29 @@ const UberScreen = () => {
   // const fareEstimate=()=>{
   //   var options = {
   //   url: 'https://api.uber.com/v1/estimates/price',
-	// 	qs: {
-	// 		start_latitude: locations.start_latitude,
-	// 		start_longitude: locations.start_longitude,
-	// 		end_latitude: locations.end_latitude,
-	// 		end_longitude: locations.end_longitude
-	// 	  },
-	// 	headers: {
-	// 		'Authorization': 'Token '+process.env.UBER_API_KEY,
-	// 	},
-	// 	method: 'GET'
-	// };
+  // 	qs: {
+  // 		start_latitude: locations.start_latitude,
+  // 		start_longitude: locations.start_longitude,
+  // 		end_latitude: locations.end_latitude,
+  // 		end_longitude: locations.end_longitude
+  // 	  },
+  // 	headers: {
+  // 		'Authorization': 'Token '+process.env.UBER_API_KEY,
+  // 	},
+  // 	method: 'GET'
+  // };
 
-
-	// request(options)
-	// .then((body)=>{
-	// 	var info = JSON.parse(body);
-	// 	//console.log(info);
-	// 	response.send(info);
-	// })
-	// .catch((err)=>{
-	// 	console.log('something went wrong with the uber API call');
-	// 	console.log(err);
-	// })
+  // request(options)
+  // .then((body)=>{
+  // 	var info = JSON.parse(body);
+  // 	//console.log(info);
+  // 	response.send(info);
+  // })
+  // .catch((err)=>{
+  // 	console.log('something went wrong with the uber API call');
+  // 	console.log(err);
+  // })
   // }
-
-
 
   const handleBackPress = () => {
     if (canGoBack && webViewRef.current) {
@@ -119,6 +116,106 @@ const UberScreen = () => {
     // You can add logic here to handle specific URLs if needed
     return true; // Allow all URLs to load
   };
+
+  const fetchUberPrices = async () => {
+    const uberGraphQLQuery = `
+      query Products($pickup: InputCoordinate!, $destinations: [InputCoordinate!]!) {
+        products(pickup: $pickup, destinations: $destinations) {
+          ...ProductsFragment
+          __typename
+        }
+      }
+      
+      fragment ProductsFragment on RVWebCommonProductsResponse {
+        tiers {
+          ...TierFragment
+          __typename
+        }
+        __typename
+      }
+      
+      fragment TierFragment on RVWebCommonProductTier {
+        products {
+          ...ProductFragment
+          __typename
+        }
+        title
+        __typename
+      }
+      
+      fragment ProductFragment on RVWebCommonProduct {
+        capacity
+        displayName
+        estimatedTripTime
+        fare
+        __typename
+      }
+    `;
+
+    const uberVariables = {
+      pickup: {
+        latitude: pickupLocationCoor.latitude,
+        longitude: pickupLocationCoor.longitude,
+      },
+      destinations: [
+        {
+          latitude: dropLocationCoor.latitude,
+          longitude: dropLocationCoor.longitude,
+        },
+      ],
+    };
+
+    const response = await fetch('https://m.uber.com/go/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // You might need to handle CSRF token differently
+        // 'X-Csrf-Token': 'Your CSRF token here'
+      },
+      body: JSON.stringify({
+        operationName: 'Products',
+        variables: uberVariables,
+        query: uberGraphQLQuery,
+      }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  };
+
+  const handleUberData = (data) => {
+    if (data.errors) {
+      console.error('Errors in Uber data:', data.errors);
+      return;
+    }
+
+    const uberProducts = data.data.products.tiers.flatMap((tier) =>
+      tier.products.map((product) => ({
+        id: product.displayName,
+        service: product.displayName,
+        price: product.fare ? `$${product.fare.toFixed(2)}` : 'N/A',
+        estimatedTime: product.estimatedTripTime,
+        logo: uber,
+        app: 'uber',
+        deepLink: `uber://?action=setPickup&pickup[latitude]=${pickupLocationCoor.latitude}&pickup[longitude]=${pickupLocationCoor.longitude}&dropoff[latitude]=${dropLocationCoor.latitude}&dropoff[longitude]=${dropLocationCoor.longitude}`,
+      }))
+    );
+
+    setAllRides((prevRides) => [...prevRides, ...uberProducts]);
+    setFares((prevFares) => [...prevFares, ...uberProducts]);
+  };
+
+  //uber graphql api
+  // try {
+  //   const uberResponse = await fetchUberPrices();
+  //   handleUberData(uberResponse);
+  // } catch (error) {
+  //   console.error('Error fetching Uber data:', error);
+  // }
 
   return (
     <View style={styles.container}>
