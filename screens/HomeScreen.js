@@ -16,7 +16,7 @@ import {
   Linking,
   ActivityIndicator,
 } from 'react-native';
-import { GOOGLE_API_KEY } from '@env';
+import { GOOGLE_API_KEY, PORT } from '@env';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import * as Location from 'expo-location';
 import locationIcon from '../assets/current-location.png';
@@ -86,19 +86,6 @@ const HomeScreen = () => {
     });
 
     handleSetPickupLocation(details.formatted_address);
-
-    // const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${pickupLocationCoor.latitude},${pickupLocationCoor.longitude}&key=AIzaSyDoY8kaH8X6P2dhE0-FadrN5VOwfkt4Dwk&sensor=true`;
-    // await fetch(url)
-    //   .then((response) => response.json())
-    //   .then((data) => {
-    //     if (data.status === 'OK') {
-    //       const address = data.results[0].formatted_address;
-    //       handleSetPickupLocation(address);
-    //     } else {
-    //       console.error('Error:', data.status);
-    //     }
-    //   })
-    //   .catch((error) => console.error('Error:', error));
   };
 
   const handleDropSelect = async (data, details) => {
@@ -109,19 +96,6 @@ const HomeScreen = () => {
     });
 
     handleSetDropLocation(details.formatted_address);
-
-    // const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${details.geometry.location.lat},${details.geometry.location.lng}&key=AIzaSyDoY8kaH8X6P2dhE0-FadrN5VOwfkt4Dwk&sensor=true`;
-    // await fetch(url)
-    //   .then((response) => response.json())
-    //   .then((data) => {
-    //     if (data.status === 'OK') {
-    //       const address = data.results[0].formatted_address;
-    //       handleSetDropLocation(address);
-    //     } else {
-    //       console.error('Error:', data.status);
-    //     }
-    //   })
-    //   .catch((error) => console.error('Error:', error));
   };
 
   const handleUseCurrentLocation = async () => {
@@ -158,18 +132,6 @@ const HomeScreen = () => {
           `${address.formattedAddress || ''}`.trim()
         );
       }
-      // const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${pickupLocationCoor.latitude},${pickupLocationCoor.longitude}&key=AIzaSyDoY8kaH8X6P2dhE0-FadrN5VOwfkt4Dwk&sensor=true`;
-      // await fetch(url)
-      //   .then((response) => response.json())
-      //   .then((data) => {
-      //     if (data.status === 'OK') {
-      //       const address = data.results[0].formatted_address;
-      //       handleSetPickupLocation(address);
-      //     } else {
-      //       console.error('Error:', data.status);
-      //     }
-      //   })
-      //   .catch((error) => console.error('Error:', error));
     } catch (error) {
       console.error('Error fetching location:', error);
       Alert.alert(
@@ -217,7 +179,7 @@ const HomeScreen = () => {
   };
 
   const fetchUberPrices = async (uberUrl) => {
-    const url = `https://7764-49-43-243-85.ngrok-free.app/uber/scrape-prices?pickupLatitude=${pickupLocationCoor.latitude}&pickupLongitude=${pickupLocationCoor.longitude}&dropLatitude=${dropLocationCoor.latitude}&dropLongitude=${dropLocationCoor.longitude}`;
+    const url = `${process.env.PORT}/uber/scrape-prices?pickupLatitude=${pickupLocationCoor.latitude}&pickupLongitude=${pickupLocationCoor.longitude}&dropLatitude=${dropLocationCoor.latitude}&dropLongitude=${dropLocationCoor.longitude}`;
 
     try {
       const response = await fetch(url, {
@@ -286,6 +248,7 @@ const HomeScreen = () => {
         const olaData = await fetchOlaPrices(olaUrl); // Initial fetch
 
         const combinedRides = [...uberData, ...olaData];
+
         navigation.navigate('AvailableRides', {
           allRides: combinedRides,
           pickupLat: pickupLocationCoor.latitude,
