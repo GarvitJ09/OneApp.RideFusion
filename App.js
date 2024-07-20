@@ -12,7 +12,8 @@ import AvailableRidesScreen from './screens/AvailableRidesScreen';
 import ola from './assets/ola.png';
 import uber from './assets/uber1.png';
 import rapido from './assets/rapido.png';
-import { GOOGLE_API_KEY } from '@env';
+import { GOOGLE_API_KEY, PORT } from '@env';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import {
   View,
@@ -101,26 +102,28 @@ function MainTabs() {
 
 function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName='Splash'>
-        <Stack.Screen
-          name='Splash'
-          component={SplashScreen}
-          options={{ headerShown: false }}
-        />
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName='Splash'>
+          <Stack.Screen
+            name='Splash'
+            component={SplashScreen}
+            options={{ headerShown: false }}
+          />
 
-        <Stack.Screen
-          name='MainTabs'
-          component={MainTabs}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name='AvailableRides'
-          component={AvailableRidesScreen}
-          options={{ headerShown: false }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+          <Stack.Screen
+            name='MainTabs'
+            component={MainTabs}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name='AvailableRides'
+            component={AvailableRidesScreen}
+            options={{ headerShown: false }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
 

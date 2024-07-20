@@ -7,12 +7,14 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Linking,
   Modal,
+  Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import axios from 'axios';
+
+import { PORT } from '@env';
 
 import auto from '../assets/auto.png';
 import bike from '../assets/bike.png';
@@ -45,9 +47,10 @@ const AvailableRidesScreen = ({ route }) => {
   const [selectedRides, setSelectedRides] = useState({});
   const [rideDetails, setRideDetails] = useState(null);
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
-  const [ongoingBookings, setOngoingBookings] = useState([]);
   const [loadingModalVisible, setLoadingModalVisible] = useState(false);
   const [emptyDataModalVisible, setEmptyDataModalVisible] = useState(false);
+  const [animation, setAnimation] = useState(new Animated.Value(0));
+  const [bookingStatus, setBookingStatus] = useState({});
 
   const categories = [
     { name: 'auto', logo: auto },
@@ -55,10 +58,6 @@ const AvailableRidesScreen = ({ route }) => {
     { name: 'mini', logo: mini },
     { name: 'suv', logo: suv },
   ];
-
-  //   const filteredRides = allRides.filter(
-  //     (ride) => serviceToFilterMap[ride.service] === selectedCategory
-  //   );
 
   const filteredRides = allRides.filter(
     (ride) =>
@@ -108,8 +107,6 @@ const AvailableRidesScreen = ({ route }) => {
     </View>
   );
 
-  const [bookingStatus, setBookingStatus] = useState({});
-
   const handleBookRides = () => {
     const selectedRideDetails = Object.values(selectedRides).filter(
       (ride) => ride.app === 'ola' || ride.app === 'uber'
@@ -144,8 +141,8 @@ const AvailableRidesScreen = ({ route }) => {
       maxBodyLength: Infinity,
       url:
         ride.app === 'ola'
-          ? 'https://7764-49-43-243-85.ngrok-free.app/ola/ride-search'
-          : 'https://7764-49-43-243-85.ngrok-free.app/uber/ride-search',
+          ? `${process.env.PORT}/ola/ride-search`
+          : `${process.env.PORT}/uber/ride-search`,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -211,22 +208,29 @@ const AvailableRidesScreen = ({ route }) => {
       maxBodyLength: Infinity,
       url:
         appName === 'ola'
-          ? 'https://7764-49-43-243-85.ngrok-free.app/ola/ride-cancel'
-          : 'https://7764-49-43-243-85.ngrok-free.app/uber/ride-cancel',
+          ? `${process.env.PORT}/ola/ride-cancel`
+          : `${process.env.PORT}/uber/ride-cancel`,
       headers: {},
     };
 
     axios
       .request(config)
       .then((response) => {
-        console.log(JSON.stringify(response.data));
+        console.log('Cancellation response:', response.data);
         setBookingStatus((prev) => ({ ...prev, [appName]: 'cancelled' }));
+
+        // Remove ride details from state
+        setRideDetails((prevDetails) => {
+          if (!prevDetails) return null;
+          return prevDetails.filter((detail) => detail.id !== bookingId);
+        });
       })
       .catch((error) => {
-        console.log(error);
+        console.log('Cancellation error:', error);
         setBookingStatus((prev) => ({ ...prev, [appName]: 'failed' }));
       })
       .finally(() => {
+        // Ensure modal is hidden if all bookings are no longer waiting
         if (
           Object.values(bookingStatus).every((status) => status !== 'waiting')
         ) {
@@ -234,13 +238,32 @@ const AvailableRidesScreen = ({ route }) => {
           setDetailsModalVisible(true);
         }
       });
-
-    // Add null check before filtering
-    setRideDetails((prevDetails) => {
-      if (prevDetails === null) return null;
-      return prevDetails.filter((detail) => detail.id !== bookingId);
-    });
   };
+
+  const animateModal = (toValue) => {
+    Animated.timing(animation, {
+      toValue,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  useEffect(() => {
+    if (loadingModalVisible || detailsModalVisible || emptyDataModalVisible) {
+      animateModal(1);
+    } else {
+      animateModal(0);
+    }
+  }, [loadingModalVisible, detailsModalVisible, emptyDataModalVisible]);
+
+  const modalStyle = {
+    transform: [
+      {
+        scale: animation,
+      },
+    ],
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -255,112 +278,87 @@ const AvailableRidesScreen = ({ route }) => {
           <TouchableOpacity
             key={category.name}
             style={[
-              styles.tab,
-              selectedCategory === category.name && styles.selectedTab,
+              styles.tabButton,
+              selectedCategory === category.name && styles.selectedTabButton,
             ]}
             onPress={() => setSelectedCategory(category.name)}
           >
-            <Image source={category.logo} style={styles.categoryLogo} />
+            <Image source={category.logo} style={styles.tabIcon} />
+            <Text
+              style={[
+                styles.tabText,
+                selectedCategory === category.name && styles.selectedTabText,
+              ]}
+            >
+              {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <FlatList
-        data={filteredRides}
-        renderItem={renderRideItem}
-        keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>
-            No rides available for this category
-          </Text>
-        }
-      />
+      {filteredRides.length === 0 ? (
+        <View style={styles.noRidesContainer}>
+          <Text style={styles.noRidesText}>No rides available</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredRides}
+          renderItem={renderRideItem}
+          keyExtractor={(item) => `${item.app}-${item.service}`}
+          style={styles.rideList}
+        />
+      )}
 
-      <TouchableOpacity style={styles.bookButton} onPress={handleBookRides}>
+      <TouchableOpacity
+        style={styles.bookButton}
+        onPress={handleBookRides}
+        disabled={loadingModalVisible}
+      >
         <Text style={styles.bookButtonText}>Book your ride</Text>
       </TouchableOpacity>
 
-      {/* Loading Modal */}
-
-      {/* Loading Modal */}
-      {/* Loading Modal */}
-      <Modal visible={loadingModalVisible} animationType='slide' transparent>
+      <Modal transparent={true} visible={loadingModalVisible}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Booking in Progress</Text>
-            {Object.entries(bookingStatus).map(([app, status]) => (
-              <View key={app} style={styles.detailsContainer}>
-                <Text style={styles.detailText}>Booking with {app}</Text>
-                {status === 'waiting' ? (
-                  <>
-                    <ActivityIndicator size='small' color='#4CAF50' />
-                    <TouchableOpacity
-                      style={styles.cancelButton}
-                      onPress={() =>
-                        handleCancelBooking(selectedRides[app].id, app)
-                      }
-                    >
-                      <Text style={styles.cancelButtonText}>Cancel</Text>
-                    </TouchableOpacity>
-                  </>
-                ) : status === 'completed' ? (
-                  <Text style={styles.detailText}>Completed</Text>
-                ) : status === 'cancelled' ? (
-                  <Text style={styles.detailText}>Cancelled</Text>
-                ) : (
-                  <Text style={styles.detailText}>Failed</Text>
+          <Animated.View style={[styles.modalContent, modalStyle]}>
+            <Text style={styles.modalTitle}>Booking in progress...</Text>
+            <ActivityIndicator size='large' color='#0000ff' />
+            {Object.keys(bookingStatus).map((app) => (
+              <View key={app} style={styles.bookingStatusContainer}>
+                <Text style={styles.bookingStatusText}>
+                  {app}: {bookingStatus[app]}
+                </Text>
+                {bookingStatus[app] === 'waiting' && (
+                  <TouchableOpacity
+                    onPress={() =>
+                      handleCancelBooking(selectedRides[app]?.id, app)
+                    }
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
                 )}
               </View>
             ))}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => {
-                setLoadingModalVisible(false);
-                if (
-                  Object.values(bookingStatus).some(
-                    (status) => status === 'completed'
-                  )
-                ) {
-                  setDetailsModalVisible(true);
-                }
-              }}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
+          </Animated.View>
         </View>
       </Modal>
-      {/* Details Modal */}
-      <Modal visible={detailsModalVisible} animationType='slide' transparent>
+
+      <Modal transparent={true} visible={detailsModalVisible}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Booking Details</Text>
-            {rideDetails && rideDetails.length > 0 ? (
-              rideDetails.map((details) => (
-                <View key={details.id} style={styles.detailsContainer}>
-                  <Text style={styles.detailText}>
-                    Driver Name: {details.data.driverName}
+          <Animated.View style={[styles.modalContent, modalStyle]}>
+            <Text style={styles.modalTitle}>Ride Details</Text>
+            {rideDetails ? (
+              rideDetails.map((detail) => (
+                <View key={detail.id} style={styles.rideDetailItem}>
+                  <Text style={styles.rideDetailText}>
+                    App: {detail.app} - Service: {detail.service}
                   </Text>
-                  <Text style={styles.detailText}>
-                    Vehicle Type: {details.data.vehicleType}
+                  <Text style={styles.rideDetailText}>
+                    {JSON.stringify(detail.data)}
                   </Text>
-                  <Text style={styles.detailText}>
-                    Waiting Minutes: {details.data.waitingMinutes}
-                  </Text>
-                  <Text style={styles.detailText}>App: {details.app}</Text>
-                  <TouchableOpacity
-                    onPress={() =>
-                      Linking.openURL(`tel:${details.data.phoneNumber}`)
-                    }
-                  >
-                    <Text style={styles.phoneNumber}>
-                      Phone: {details.data.phoneNumber}
-                    </Text>
-                  </TouchableOpacity>
                 </View>
               ))
             ) : (
-              <Text>No ride details available.</Text>
+              <Text>No ride details available</Text>
             )}
             <TouchableOpacity
               style={styles.closeButton}
@@ -368,17 +366,15 @@ const AvailableRidesScreen = ({ route }) => {
             >
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </View>
       </Modal>
 
-      {/* Empty Data Modal */}
-      <Modal visible={emptyDataModalVisible} animationType='slide' transparent>
+      <Modal transparent={true} visible={emptyDataModalVisible}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>No Rides Selected</Text>
-            <Text style={styles.modalText}>
-              Please select at least one ride before booking.
+          <Animated.View style={[styles.modalContent, modalStyle]}>
+            <Text style={styles.modalTitle}>
+              Please select at least one ride.
             </Text>
             <TouchableOpacity
               style={styles.closeButton}
@@ -386,7 +382,7 @@ const AvailableRidesScreen = ({ route }) => {
             >
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </View>
       </Modal>
     </View>
@@ -396,52 +392,59 @@ const AvailableRidesScreen = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    paddingTop: 40,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    paddingHorizontal: 10,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginLeft: 16,
+    marginLeft: 10,
   },
   tabContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginVertical: 10,
   },
-  tab: {
-    padding: 10,
-    borderRadius: 5,
-    backgroundColor: '#eee',
+  tabButton: {
+    alignItems: 'center',
   },
-  selectedTab: {
-    backgroundColor: '#4CAF50',
+  selectedTabButton: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#000',
   },
-  categoryLogo: {
-    width: 30,
-    height: 30,
+  tabIcon: {
+    width: 40,
+    height: 40,
+    marginBottom: 5,
+  },
+  tabText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  selectedTabText: {
+    fontWeight: 'bold',
+  },
+  rideList: {
+    paddingHorizontal: 10,
   },
   rideItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: '#ccc',
   },
   logo: {
     width: 40,
     height: 40,
-    marginRight: 10,
-    borderRadius: 20,
   },
   rideInfo: {
     flex: 1,
+    marginLeft: 10,
   },
   rideType: {
     fontSize: 16,
@@ -449,30 +452,33 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: 14,
-    color: '#666',
+    color: '#555',
   },
   ridePrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#4CAF50',
-  },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 16,
-    color: '#666',
   },
   bookButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#000',
     padding: 15,
-    margin: 15,
-    borderRadius: 5,
     alignItems: 'center',
+    justifyContent: 'center',
+    margin: 10,
+    borderRadius: 5,
   },
   bookButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
+  },
+  noRidesContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noRidesText: {
+    fontSize: 18,
+    color: '#555',
   },
   modalContainer: {
     flex: 1,
@@ -481,54 +487,44 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
+    width: '80%',
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 10,
-    width: '80%',
+    alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  modalText: {
-    fontSize: 16,
     marginBottom: 20,
   },
-  detailsContainer: {
-    marginVertical: 10,
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
+  rideDetailItem: {
+    marginBottom: 15,
   },
-  detailText: {
-    fontSize: 14,
-    marginBottom: 5,
-  },
-  phoneNumber: {
-    color: '#4CAF50',
-    textDecorationLine: 'underline',
-  },
-  cancelButton: {
-    backgroundColor: '#FF0000',
-    padding: 5,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 5,
-  },
-  cancelButtonText: {
-    color: '#fff',
+  rideDetailText: {
+    fontSize: 16,
+    color: '#555',
   },
   closeButton: {
-    backgroundColor: '#4CAF50',
+    marginTop: 20,
     padding: 10,
+    backgroundColor: '#000',
     borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 10,
   },
   closeButtonText: {
     color: '#fff',
     fontSize: 16,
+  },
+  bookingStatusContainer: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  bookingStatusText: {
+    fontSize: 16,
+  },
+  cancelButtonText: {
+    color: '#ff0000',
+    marginTop: 5,
   },
 });
 
