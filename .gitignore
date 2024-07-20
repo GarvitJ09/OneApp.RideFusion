@@ -34,10 +34,10 @@ yarn-error.*
 # local env files
 .env*.local
 .env
-eas.json
+./eas.json
 
 #FirebaseConfig
-FirebaseConfig.js
+./FirebaseConfig.js
 
 # typescript
 *.tsbuildinfo
